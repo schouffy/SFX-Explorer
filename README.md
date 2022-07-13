@@ -13,11 +13,15 @@ Right now it only supports wav file. No mp3, no ogg, no flac...
 It lets you add a folder containing subfolders and audio files.
 You can then browse files using keyboard navigation. If you have autoplay checked, it will play each audio file immediately.
 
+![1-keyboard nav](https://user-images.githubusercontent.com/1586515/178749559-d33252af-234d-4e51-bc5e-df94abed1302.gif)
+
+You can filter files based on their full path.
+
+![3-search](https://user-images.githubusercontent.com/1586515/178749594-383121db-e052-4a96-9616-22b3bf4cc2a6.gif)
 
 Once you've found your perfect SFX, just drag it to Unity/Audacity/whatever.
 
-
-You can filter files based on their full path.
+![2-drag-drop](https://user-images.githubusercontent.com/1586515/178748573-a0704856-f3f6-4c43-bc9f-cfe6317c21df.gif)
 
 
 ### Roadmap?
