@@ -1,0 +1,68 @@
+﻿<Window x:Class="SFXExplorer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SFXExplorer"
+        xmlns:model="clr-namespace:SFXExplorer.Model"
+        mc:Ignorable="d"
+        Title="SFX Explorer" Height="600" Width="800">
+
+    <Window.Resources>
+
+        <HierarchicalDataTemplate DataType="{x:Type model:DirectoryItem}"
+                                  ItemsSource="{Binding Items}">
+            <TextBlock Text="{Binding Path=Name}" ToolTip="{Binding Path=Path}" />
+        </HierarchicalDataTemplate>
+
+        <DataTemplate DataType="{x:Type model:FileItem}">
+            <TextBlock Text="{Binding Path=Name}" ToolTip="{Binding Path=Path}" />
+        </DataTemplate>
+
+    </Window.Resources>
+
+    <DockPanel>
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusMessage}" />
+            </StatusBarItem>
+        </StatusBar>
+
+        <Grid Margin="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <GroupBox Grid.Row="0">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="8">
+                        <Button Padding="8" Content="Open the root folder containing your SFX..." Click="Button_Click"></Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="8,4,8,4">
+                        <CheckBox IsChecked="{Binding Autoplay}">Autoplay (you can also press Space to play the selected item)</CheckBox>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="8,4,8,4">
+                        <TextBlock>
+                            <Run Text="Only show items containing the following text in their "/><Underline><Run Text="full path"/></Underline><Run Text=":"/>
+                        </TextBlock>
+                        <TextBox Margin="8,0,0,0" Width="250" TextChanged="TextBox_TextChanged" />
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+
+            <TreeView Grid.Row="1" ItemsSource="{Binding Items}"
+                  ScrollViewer.VerticalScrollBarVisibility="Visible"
+                  
+                  SelectedItemChanged="TreeView_SelectedItemChanged" 
+                  KeyUp="TreeView_KeyUp"
+        
+                  PreviewMouseLeftButtonDown="TreeView_PreviewMouseLeftButtonDown"
+                  MouseMove="TreeView_MouseMove">
+            </TreeView>
+        </Grid>
+    </DockPanel>
+
+
+
+</Window>
