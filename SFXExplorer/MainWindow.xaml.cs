@@ -1,4 +1,4 @@
-﻿using SFXExplorer.Model;
+using SFXExplorer.Model;
 using SFXExplorer.Mvvm;
 using System;
 using System.Collections.Generic;
@@ -61,6 +61,10 @@ namespace SFXExplorer
             {
                 _appViewModel.PlaySelectedSound();
             }
+            if (e.Key == Key.O)
+            {
+				_appViewModel.OpenSelectedFolder();
+			}
         }
 
 

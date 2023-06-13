@@ -101,26 +101,44 @@ namespace SFXExplorer.Mvvm
             }
         }
 
-        void PlaySound(FileItem fileItem)
+        public void OpenSelectedFolder()
         {
-            try
-            {
-                if (fileItem.Path.EndsWith(".wav"))
-                {
-                    using (System.Media.SoundPlayer player = new System.Media.SoundPlayer(fileItem.Path))
-                    {
-                        player.Play();
-                    }
-                }
-                else
-                {
-                    StatusMessage = "Error: This file format is not supported";
-                }
-            }
-            catch (Exception e)
-            {
-                StatusMessage = "Error: " + e.Message;
-            }
-        }
+			System.Diagnostics.Process.Start("explorer.exe", "/select, " + _selectedItem.Path);
+		}
+
+        System.Diagnostics.Process _process;
+        System.Diagnostics.ProcessStartInfo _startInfo;
+		void PlaySound(FileItem fileItem)
+        {
+            if (_process != null && !_process.HasExited)
+                _process.Kill();
+
+			_process = new System.Diagnostics.Process();
+			_startInfo = new System.Diagnostics.ProcessStartInfo();
+			_startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+			_startInfo.FileName = "\"C:\\Program Files\\VideoLAN\\VLC\\vlc.exe\"";
+			_startInfo.Arguments = $" --no-loop --no-repeat -I dummy --dummy-quiet \"{fileItem.Path}\" vlc://quit"; 
+			_process.StartInfo = _startInfo;
+			_process.Start();
+
+			//try
+			//{
+			//    if (fileItem.Path.EndsWith(".wav"))
+			//    {
+			//        using (System.Media.SoundPlayer player = new System.Media.SoundPlayer(fileItem.Path))
+			//        {
+			//            player.Play();
+			//        }
+			//    }
+			//    else
+			//    {
+			//        StatusMessage = "Error: This file format is not supported";
+			//    }
+			//}
+			//catch (Exception e)
+			//{
+			//    StatusMessage = "Error: " + e.Message;
+			//}
+		}
     }
 }
