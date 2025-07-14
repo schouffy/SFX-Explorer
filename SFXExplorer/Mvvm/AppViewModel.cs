@@ -1,9 +1,11 @@
 ﻿using SFXExplorer.Model;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 
 namespace SFXExplorer.Mvvm
 {
@@ -30,14 +32,14 @@ namespace SFXExplorer.Mvvm
                 if (_selectedItem is FileItem)
                 {
                     if (Autoplay)
-                        PlaySound((FileItem)_selectedItem);
+                        Play(((FileItem)_selectedItem).Path);
                     else
                         StatusMessage = "Press 'Space' to play the selected audio file";
                 }
             }
         }
 
-        private bool _autoplay;
+        private bool _autoplay = true;
         public bool Autoplay
         {
             get { return _autoplay; }
@@ -56,6 +58,7 @@ namespace SFXExplorer.Mvvm
             StatusMessage = "Select a root folder containing audio files";
         }
 
+
         public void Initialize()
         {
             var itemProvider = new ItemProvider();
@@ -65,39 +68,61 @@ namespace SFXExplorer.Mvvm
             StatusMessage = "Press 'Space' to play the selected audio file";
         }
 
-        private List<Item> GetFilteredItems(List<Item> items, string query)
+        private string[] GetSanitizedQuery(string query)
+        {
+            return RemoveDiacritics(query).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        }
+
+        private List<Item> GetFilteredItems(List<Item> items, string[] sanitizedQuery)
         {
             var filteredItems = new List<Item>();
             foreach (var item in items)
             {
-                if (item is FileItem && item.SimplifiedPath.Contains(query))
+                if (item is FileItem fileItem && fileItem.IsMatch(sanitizedQuery))
                 {
                     filteredItems.Add(item);
                 }
                 if (item is DirectoryItem)
                 {
-                    filteredItems.AddRange(GetFilteredItems(((DirectoryItem)item).Items, query));
+                    filteredItems.AddRange(GetFilteredItems(((DirectoryItem)item).Items, sanitizedQuery));
                 }
             }
             return filteredItems;
         }
 
-        public void PlaySelectedSound()
+        static string RemoveDiacritics(string text)
+        {
+            string formD = text.Normalize(NormalizationForm.FormD);
+            StringBuilder sb = new StringBuilder();
+
+            foreach (char ch in formD)
+            {
+                UnicodeCategory uc = CharUnicodeInfo.GetUnicodeCategory(ch);
+                if (uc != UnicodeCategory.NonSpacingMark)
+                {
+                    sb.Append(ch);
+                }
+            }
+
+            return sb.ToString().Normalize(NormalizationForm.FormC);
+        }
+
+        public void TogglePlaySelected()
         {
             if (_selectedItem is FileItem)
             {
-                PlaySound((FileItem)_selectedItem);
+                Play(((FileItem)_selectedItem).Path);
             }
         }
 
-        public  void Filter(string query)
+        public void Filter(string query)
         {
             if (String.IsNullOrEmpty(query) || query.Length < 3)
                 Items = _allItems;
             else
             {
                 var simplifiedQuery = ItemProvider.GetSimplified(query);
-                Items = GetFilteredItems(_allItems, simplifiedQuery);
+                Items = GetFilteredItems(_allItems, GetSanitizedQuery(query));
             }
         }
 
@@ -106,39 +131,67 @@ namespace SFXExplorer.Mvvm
 			System.Diagnostics.Process.Start("explorer.exe", "/select, " + _selectedItem.Path);
 		}
 
+        public void StopPlayback()
+        {
+            KillPlayProcess();
+        }
+
         System.Diagnostics.Process _process;
         System.Diagnostics.ProcessStartInfo _startInfo;
-		void PlaySound(FileItem fileItem)
+        void Play(String path)
+        {
+            // VLC:
+            KillPlayProcess();
+
+            _process = new System.Diagnostics.Process();
+            _startInfo = new System.Diagnostics.ProcessStartInfo();
+            _startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+            _startInfo.FileName = "\"C:\\Program Files\\VideoLAN\\VLC\\vlc.exe\"";
+            _startInfo.Arguments = $" --no-loop --no-repeat -I dummy --dummy-quiet \"{path}\" vlc://quit";
+            _process.StartInfo = _startInfo;
+            _process.Start();
+
+            // Windows integrated reader:
+            //try
+            //{
+            //    if (fileItem.Path.EndsWith(".wav"))
+            //    {
+            //        using (System.Media.SoundPlayer player = new System.Media.SoundPlayer(fileItem.Path))
+            //        {
+            //            player.Play();
+            //        }
+            //    }
+            //    else
+            //    {
+            //        StatusMessage = "Error: This file format is not supported";
+            //    }
+            //}
+            //catch (Exception e)
+            //{
+            //    StatusMessage = "Error: " + e.Message;
+            //}
+        }
+
+        void KillPlayProcess()
         {
             if (_process != null && !_process.HasExited)
                 _process.Kill();
+        }
 
-			_process = new System.Diagnostics.Process();
-			_startInfo = new System.Diagnostics.ProcessStartInfo();
-			_startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-			_startInfo.FileName = "\"C:\\Program Files\\VideoLAN\\VLC\\vlc.exe\"";
-			_startInfo.Arguments = $" --no-loop --no-repeat -I dummy --dummy-quiet \"{fileItem.Path}\" vlc://quit"; 
-			_process.StartInfo = _startInfo;
-			_process.Start();
+        protected override void OnDispose()
+        {
+            base.OnDispose();
+            KillPlayProcess();
+        }
 
-			//try
-			//{
-			//    if (fileItem.Path.EndsWith(".wav"))
-			//    {
-			//        using (System.Media.SoundPlayer player = new System.Media.SoundPlayer(fileItem.Path))
-			//        {
-			//            player.Play();
-			//        }
-			//    }
-			//    else
-			//    {
-			//        StatusMessage = "Error: This file format is not supported";
-			//    }
-			//}
-			//catch (Exception e)
-			//{
-			//    StatusMessage = "Error: " + e.Message;
-			//}
-		}
+        // TODO
+        // search/filter (mvvm to avoid freeze + non-hammer + diacritics + several words)
+
+        // Auto open last folder
+        // load folder in other thread, with a progress prompt
+        // integrated wav player / external program to use
+        // right click => open folder, copy, copy name, copy full path
+        // short list
+        // show file duration (lazy load)
     }
 }

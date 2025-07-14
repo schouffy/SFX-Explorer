@@ -11,7 +11,15 @@ namespace SFXExplorer.Model
 
     public class FileItem : Item
     {
-
+        public bool IsMatch(string[] sanitizedQuery)
+        {
+            foreach (var word in sanitizedQuery)
+            {
+                if (!SimplifiedPath.Contains(word))
+                    return false;
+            }
+            return true;
+        }
     }
 
     public class DirectoryItem : Item
